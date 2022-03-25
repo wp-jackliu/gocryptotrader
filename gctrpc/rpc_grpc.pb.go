@@ -31,6 +31,7 @@ type GoCryptoTraderClient interface {
 	GetExchangeOTPCodes(ctx context.Context, in *GetExchangeOTPsRequest, opts ...grpc.CallOption) (*GetExchangeOTPsResponse, error)
 	EnableExchange(ctx context.Context, in *GenericExchangeNameRequest, opts ...grpc.CallOption) (*GenericResponse, error)
 	GetTicker(ctx context.Context, in *GetTickerRequest, opts ...grpc.CallOption) (*TickerResponse, error)
+	SaveTicker(ctx context.Context, in *SaveTickerRequest, opts ...grpc.CallOption) (*TickerResponse, error)
 	GetTickers(ctx context.Context, in *GetTickersRequest, opts ...grpc.CallOption) (*GetTickersResponse, error)
 	GetOrderbook(ctx context.Context, in *GetOrderbookRequest, opts ...grpc.CallOption) (*OrderbookResponse, error)
 	GetOrderbooks(ctx context.Context, in *GetOrderbooksRequest, opts ...grpc.CallOption) (*GetOrderbooksResponse, error)
@@ -235,6 +236,15 @@ func (c *goCryptoTraderClient) EnableExchange(ctx context.Context, in *GenericEx
 func (c *goCryptoTraderClient) GetTicker(ctx context.Context, in *GetTickerRequest, opts ...grpc.CallOption) (*TickerResponse, error) {
 	out := new(TickerResponse)
 	err := c.cc.Invoke(ctx, "/gctrpc.GoCryptoTrader/GetTicker", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *goCryptoTraderClient) SaveTicker(ctx context.Context, in *SaveTickerRequest, opts ...grpc.CallOption) (*TickerResponse, error) {
+	out := new(TickerResponse)
+	err := c.cc.Invoke(ctx, "/gctrpc.GoCryptoTrader/SaveTicker", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1143,6 +1153,7 @@ type GoCryptoTraderServer interface {
 	GetExchangeOTPCodes(context.Context, *GetExchangeOTPsRequest) (*GetExchangeOTPsResponse, error)
 	EnableExchange(context.Context, *GenericExchangeNameRequest) (*GenericResponse, error)
 	GetTicker(context.Context, *GetTickerRequest) (*TickerResponse, error)
+	SaveTicker(context.Context, *SaveTickerRequest) (*TickerResponse, error)
 	GetTickers(context.Context, *GetTickersRequest) (*GetTickersResponse, error)
 	GetOrderbook(context.Context, *GetOrderbookRequest) (*OrderbookResponse, error)
 	GetOrderbooks(context.Context, *GetOrderbooksRequest) (*GetOrderbooksResponse, error)
@@ -1271,6 +1282,9 @@ func (UnimplementedGoCryptoTraderServer) EnableExchange(context.Context, *Generi
 }
 func (UnimplementedGoCryptoTraderServer) GetTicker(context.Context, *GetTickerRequest) (*TickerResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetTicker not implemented")
+}
+func (UnimplementedGoCryptoTraderServer) SaveTicker(context.Context, *SaveTickerRequest) (*TickerResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SaveTicker not implemented")
 }
 func (UnimplementedGoCryptoTraderServer) GetTickers(context.Context, *GetTickersRequest) (*GetTickersResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetTickers not implemented")
@@ -1764,6 +1778,24 @@ func _GoCryptoTrader_GetTicker_Handler(srv interface{}, ctx context.Context, dec
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(GoCryptoTraderServer).GetTicker(ctx, req.(*GetTickerRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GoCryptoTrader_SaveTicker_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SaveTickerRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GoCryptoTraderServer).SaveTicker(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gctrpc.GoCryptoTrader/SaveTicker",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GoCryptoTraderServer).SaveTicker(ctx, req.(*SaveTickerRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -3338,6 +3370,10 @@ var GoCryptoTrader_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetTicker",
 			Handler:    _GoCryptoTrader_GetTicker_Handler,
+		},
+		{
+			MethodName: "SaveTicker",
+			Handler:    _GoCryptoTrader_SaveTicker_Handler,
 		},
 		{
 			MethodName: "GetTickers",

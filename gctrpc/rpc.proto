@@ -99,6 +99,13 @@ message GetTickerRequest {
     string asset_type = 3;
 }
 
+message SaveTickerRequest {
+    string exchange = 1;
+    CurrencyPair pair = 2;
+    string asset_type = 3;
+    string ticker_type = 4;
+}
+
 message CurrencyPair {
     string delimiter = 1;
     string base = 2;
@@ -1196,6 +1203,13 @@ service GoCryptoTrader {
     rpc GetTicker (GetTickerRequest) returns (TickerResponse) {
         option (google.api.http) = {
             post: "/v1/getticker"
+            body: "*"
+        };
+    }
+
+    rpc SaveTicker (SaveTickerRequest) returns (TickerResponse) {
+        option (google.api.http) = {
+            post: "/v1/saveticker"
             body: "*"
         };
     }

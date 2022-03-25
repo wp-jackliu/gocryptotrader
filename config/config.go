@@ -1795,3 +1795,12 @@ func (c *Exchange) Validate() error {
 	}
 	return nil
 }
+
+// GetCsvDirectory gets the data path for the given subpath
+func (c *Config) GetCsvDirectory() string {
+	var baseDir string
+	if c.CsvDirectory != "" {
+		baseDir = c.DataDirectory
+	}
+	return baseDir
+}

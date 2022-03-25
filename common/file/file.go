@@ -93,6 +93,18 @@ func Exists(name string) bool {
 	return !os.IsNotExist(err)
 }
 
+func PathExists(path string) (bool, error) {
+
+	_, err := os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return false, err
+}
+
 // WriteAsCSV takes a table of records and writes it as CSV
 func WriteAsCSV(filename string, records [][]string) error {
 	if len(records) == 0 {
@@ -120,4 +132,76 @@ func WriteAsCSV(filename string, records [][]string) error {
 		return err
 	}
 	return Write(filename, buf.Bytes())
+}
+
+func Tracefile(filename string, title []string, records [][]string) error {
+	b, err := PathExists(filename)
+	if err != nil {
+		return err
+	}
+
+	buf := bytes.Buffer{}
+	w := csv.NewWriter(&buf)
+
+	if !b {
+		fil, _ := os.OpenFile(filename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
+		if len(records) == 0 {
+			return errors.New("no records in matrix")
+		}
+
+		err := w.Write(title)
+		if err != nil {
+			return err
+		}
+		alignment := len(records[0])
+		for i := range records {
+			if len(records[i]) != alignment {
+				return errors.New("incorrect alignment")
+			}
+
+			err := w.Write(records[i])
+			if err != nil {
+				return err
+			}
+		}
+		w.Flush()
+
+		if err := w.Error(); err != nil {
+			return err
+		}
+
+		// 查找文件末尾的偏移量
+		n, _ := fil.Seek(0, 2)
+
+		_, err = fil.WriteAt(buf.Bytes(), n)
+		fil.Close()
+	} else {
+		fil, _ := os.OpenFile(filename, os.O_RDWR, 0644)
+		if len(records) == 0 {
+			return errors.New("no records in matrix")
+		}
+		alignment := len(records[0])
+		for i := range records {
+			if len(records[i]) != alignment {
+				return errors.New("incorrect alignment")
+			}
+
+			err := w.Write(records[i])
+			if err != nil {
+				return err
+			}
+		}
+		w.Flush()
+
+		if err := w.Error(); err != nil {
+			return err
+		}
+
+		// 查找文件末尾的偏移量
+		n, _ := fil.Seek(0, 2)
+
+		_, err = fil.WriteAt(buf.Bytes(), n)
+		fil.Close()
+	}
+	return err
 }

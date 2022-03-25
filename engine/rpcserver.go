@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/thrasher-corp/gocryptotrader/config"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -393,6 +394,73 @@ func (s *RPCServer) GetTicker(ctx context.Context, r *gctrpc.GetTickerRequest) (
 	}
 
 	return resp, nil
+}
+
+// SaveTicker returns the ticker for a specified exchange, currency pair and
+// asset type
+// ticker type
+func (s *RPCServer) SaveTicker(ctx context.Context, r *gctrpc.SaveTickerRequest) (*gctrpc.TickerResponse, error) {
+	a, err := asset.New(r.AssetType)
+	if err != nil {
+		return nil, err
+	}
+
+	e, err := s.GetExchangeByName(r.Exchange)
+	if err != nil {
+		return nil, err
+	}
+
+	err = checkParams(r.Exchange, e, a, currency.Pair{
+		Delimiter: r.Pair.Delimiter,
+		Base:      currency.NewCode(r.Pair.Base),
+		Quote:     currency.NewCode(r.Pair.Quote),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if r.TickerType == "csv" {
+		var LastUpdated int64
+		var columns [][]string
+		for {
+			t, _ := s.GetSpecificTicker(ctx,
+				currency.Pair{
+					Delimiter: r.Pair.Delimiter,
+					Base:      currency.NewCode(r.Pair.Base),
+					Quote:     currency.NewCode(r.Pair.Quote),
+				},
+				r.Exchange,
+				a,
+			)
+
+			if LastUpdated == 0 {
+				LastUpdated = s.unixTimestamp(t.LastUpdated)
+			} else {
+				if LastUpdated == s.unixTimestamp(t.LastUpdated) {
+					continue
+				} else {
+					LastUpdated = s.unixTimestamp(t.LastUpdated)
+				}
+			}
+
+			timestamp := time.Now()
+			title := []string{"base", "quote", "last_updated", "last", "high", "low", "bid", "ask", "volume"}
+			column := []string{r.Pair.Base, r.Pair.Quote, strconv.FormatInt(t.LastUpdated.Unix(), 10), strconv.FormatFloat(t.Last, 'G', -1, 64),
+				strconv.FormatFloat(t.High, 'G', -1, 64), strconv.FormatFloat(t.Low, 'G', -1, 64), strconv.FormatFloat(t.Bid, 'G', -1, 64),
+				strconv.FormatFloat(t.Ask, 'G', -1, 64), strconv.FormatFloat(t.Volume, 'G', -1, 64)}
+			columns = append(columns, column)
+
+			if len(columns) > 50 {
+				err := file.Tracefile(config.Cfg.CsvDirectory+r.Pair.Base+"-"+r.Pair.Quote+"-"+timestamp.Format("2006-01-02")+".csv", title, columns)
+				if err != nil {
+					fmt.Errorf("error message %v", err)
+				}
+				columns = [][]string{}
+			}
+		}
+	}
+
+	return nil, nil
 }
 
 // GetTickers returns a list of tickers for all enabled exchanges and all

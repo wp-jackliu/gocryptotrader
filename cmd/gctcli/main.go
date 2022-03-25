@@ -115,6 +115,7 @@ func main() {
 		getExchangeOTPsCommand,
 		getExchangeInfoCommand,
 		getTickerCommand,
+		saveTickerCommand,
 		getTickersCommand,
 		getOrderbookCommand,
 		getOrderbooksCommand,
