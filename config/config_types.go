@@ -76,6 +76,7 @@ var (
 type Config struct {
 	Name                 string                    `json:"name"`
 	DataDirectory        string                    `json:"dataDirectory"`
+	CsvDirectory         string                    `json:"csvDirectory"`
 	EncryptConfig        int                       `json:"encryptConfig"`
 	GlobalHTTPTimeout    time.Duration             `json:"globalHTTPTimeout"`
 	Database             database.Config           `json:"database"`

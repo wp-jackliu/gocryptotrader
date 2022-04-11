@@ -562,6 +562,112 @@ func getTicker(c *cli.Context) error {
 	return nil
 }
 
+var saveTickerCommand = &cli.Command{
+	Name:      "saveticker",
+	Usage:     "download tickers to CSV or database for a specific currency pair and exchange",
+	ArgsUsage: "<exchange> <pair> <asset> <type>",
+	Action:    saveTicker,
+	Flags: []cli.Flag{
+		&cli.StringFlag{
+			Name:  "exchange",
+			Usage: "the exchange to get the ticker for",
+		},
+		&cli.StringFlag{
+			Name:  "pair",
+			Usage: "the currency pair to get the ticker for",
+		},
+		&cli.StringFlag{
+			Name:  "asset",
+			Usage: "the asset type of the currency pair to get the ticker for",
+		},
+		&cli.StringFlag{
+			Name:  "type",
+			Usage: "select Ticker to save data type, 'csv' or 'database'",
+		},
+	},
+}
+
+func saveTicker(c *cli.Context) error {
+	if c.NArg() == 0 && c.NumFlags() == 0 {
+		return cli.ShowCommandHelp(c, "saveticker")
+	}
+
+	var exchangeName string
+	var currencyPair string
+	var assetType string
+	var tickerType string
+
+	if c.IsSet("exchange") {
+		exchangeName = c.String("exchange")
+	} else {
+		exchangeName = c.Args().First()
+	}
+
+	if c.IsSet("pair") {
+		currencyPair = c.String("pair")
+	} else {
+		currencyPair = c.Args().Get(1)
+	}
+
+	if !validPair(currencyPair) {
+		return errInvalidPair
+	}
+
+	if c.IsSet("asset") {
+		assetType = c.String("asset")
+	} else {
+		assetType = c.Args().Get(2)
+	}
+
+	assetType = strings.ToLower(assetType)
+	if !validAsset(assetType) {
+		return errInvalidAsset
+	}
+
+	if c.IsSet("type") {
+		tickerType = c.String("type")
+	} else {
+		tickerType = c.Args().Get(3)
+	}
+
+	tickerType = strings.ToLower(tickerType)
+	if !validtickerType(tickerType) {
+		return errInvalidType
+	}
+
+	p, err := currency.NewPairDelimiter(currencyPair, pairDelimiter)
+	if err != nil {
+		return err
+	}
+
+	conn, cancel, err := setupClient(c)
+	if err != nil {
+		return err
+	}
+	defer closeConn(conn, cancel)
+
+	client := gctrpc.NewGoCryptoTraderClient(conn)
+	result, err := client.SaveTicker(c.Context,
+		&gctrpc.SaveTickerRequest{
+			Exchange: exchangeName,
+			Pair: &gctrpc.CurrencyPair{
+				Delimiter: p.Delimiter,
+				Base:      p.Base.String(),
+				Quote:     p.Quote.String(),
+			},
+			AssetType:  assetType,
+			TickerType: tickerType,
+		},
+	)
+
+	if err != nil {
+		return err
+	}
+
+	jsonOutput(result)
+	return nil
+}
+
 var getTickersCommand = &cli.Command{
 	Name:   "gettickers",
 	Usage:  "gets all tickers for all enabled exchanges and currency pairs",

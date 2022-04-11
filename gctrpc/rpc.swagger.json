@@ -2404,6 +2404,38 @@
         ]
       }
     },
+    "/v1/saveticker": {
+      "post": {
+        "operationId": "GoCryptoTrader_SaveTicker",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/gctrpcTickerResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/gctrpcSaveTickerRequest"
+            }
+          }
+        ],
+        "tags": [
+          "GoCryptoTrader"
+        ]
+      }
+    },
     "/v1/gettickers": {
       "get": {
         "operationId": "GoCryptoTrader_GetTickers",
@@ -4765,6 +4797,23 @@
           "$ref": "#/definitions/gctrpcCurrencyPair"
         },
         "assetType": {
+          "type": "string"
+        }
+      }
+    },
+    "gctrpcSaveTickerRequest": {
+      "type": "object",
+      "properties": {
+        "exchange": {
+          "type": "string"
+        },
+        "pair": {
+          "$ref": "#/definitions/gctrpcCurrencyPair"
+        },
+        "assetType": {
+          "type": "string"
+        },
+        "tickerType": {
           "type": "string"
         }
       }
